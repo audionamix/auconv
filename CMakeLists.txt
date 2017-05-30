@@ -1,0 +1,68 @@
+cmake_minimum_required(VERSION 3.0)
+
+include(ExternalProject)
+project(AuConv)
+
+option(enable_tests "Build unit tests" ON)
+
+# enable c++11/14
+set(CMAKE_CXX_STANDARD 14)
+
+# ffmpeg
+set(ffmpeg_install_dir ${CMAKE_BINARY_DIR}/ffmpeg-install)
+set(ffmpeg_souce_dir ${CMAKE_BINARY_DIR}/ffmpeg-sources)
+file(MAKE_DIRECTORY ${ffmpeg_souce_dir})
+ExternalProject_Add(external_ffmpeg
+  GIT_REPOSITORY "git@github.com:FFmpeg/FFmpeg.git"
+  GIT_TAG "n3.3.1"
+  # don't update so that we don't rebuild every time
+  UPDATE_COMMAND ""
+  SOURCE_DIR ${ffmpeg_souce_dir}
+  CONFIGURE_COMMAND
+    cd ${ffmpeg_souce_dir} && ./configure --enable-gpl --disable-yasm --disable-avdevice --disable-swscale --disable-postproc --prefix=${ffmpeg_install_dir}
+  BUILD_COMMAND cd ${ffmpeg_souce_dir} && make
+  INSTALL_DIR ${ffmpeg_install_dir}
+  INSTALL_COMMAND cd ${ffmpeg_souce_dir} && make install
+)
+link_directories("${ffmpeg_install_dir}/lib")
+
+# libwave
+set(wave_install_dir ${CMAKE_BINARY_DIR}/wave-install)
+ExternalProject_Add(external_wave
+  GIT_REPOSITORY "https://github.com/audionamix/wave"
+  GIT_TAG "v0.5a"
+  # don't update so that we don't rebuild every time
+  UPDATE_COMMAND ""
+  CMAKE_ARGS
+    "-DCMAKE_INSTALL_PREFIX=${wave_install_dir}"
+)
+link_directories("${wave_install_dir}/lib")
+
+if (${enable_tests})
+  enable_testing()
+
+  set(gtest_install_dir ${CMAKE_BINARY_DIR}/googletest-install)
+  ExternalProject_Add(external_googletest
+    GIT_REPOSITORY "https://github.com/google/googletest.git"
+    GIT_TAG "release-1.8.0"
+    CMAKE_ARGS
+      "-Dgtest_force_shared_crt=ON"
+      "-DCMAKE_INSTALL_PREFIX=${gtest_install_dir}"
+  )
+  link_directories("${gtest_install_dir}/lib")
+
+  # download formatted tests
+  set(test_resource_path "${CMAKE_BINARY_DIR}/test_resource")
+  file(MAKE_DIRECTORY "${test_resource_path}")
+
+  # mp3
+  message(STATUS "downloading test file https://ccrma.stanford.edu/~jos/mp3/gtr-jazz.mp3")
+  file(DOWNLOAD
+    "https://ccrma.stanford.edu/~jos/mp3/gtr-jazz.mp3"
+    "${test_resource_path}/gtr-jazz.mp3"
+  )
+endif()
+
+set(src "${CMAKE_SOURCE_DIR}/src")
+include_directories(${src})
+add_subdirectory("./src")
