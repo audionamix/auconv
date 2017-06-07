@@ -14,6 +14,7 @@ target_include_directories(auconv
     ${wave_install_dir}/include
 )
 
+# unit tests
 if (${enable_tests})
   add_executable(auconv_test
     file_test.cc
@@ -44,3 +45,27 @@ if (${enable_tests})
     PUBLIC -DTEST_RESOURCES_PATH="${test_resource_path}"
   )
 endif()
+
+# install rules
+install(TARGETS auconv
+  RUNTIME DESTINATION bin
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+)
+# includes
+install(FILES
+  ${src}/auconv/file.h
+  DESTINATION include/auconv
+)
+# external dependencies
+set(dependencies "")
+foreach (ffmpeg_lib ${ffmpeg_libraries})
+  set(dependencies
+    ${dependencies}
+    ${ffmpeg_install_dir}/lib/lib${ffmpeg_lib}.a
+  )
+endforeach()
+install(FILES
+  ${dependencies}
+  DESTINATION lib
+)

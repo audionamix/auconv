@@ -11,3 +11,9 @@ target_link_libraries(auconverter
   ${external_libs}
   Boost::program_options
 )
+
+install(TARGETS auconverter
+  RUNTIME DESTINATION bin
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+)

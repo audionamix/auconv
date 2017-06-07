@@ -11,6 +11,7 @@ include(ExternalProject)
 project(AuConv)
 
 option(enable_tests "Build unit tests" ON)
+option(enable_binary "Build auconverter binary" ON)
 
 # enable c++11/14
 set(CMAKE_CXX_STANDARD 14)
@@ -80,7 +81,9 @@ ExternalProject_Add(external_wave
 link_directories("${wave_install_dir}/lib")
 
 # boost
-hunter_add_package(Boost COMPONENTS program_options)
+if (${enable_binary})
+  hunter_add_package(Boost COMPONENTS program_options)
+endif()
 
 if (${enable_tests})
   enable_testing()

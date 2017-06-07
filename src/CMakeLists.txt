@@ -1,2 +1,5 @@
 add_subdirectory("./auconv")
-add_subdirectory("./auconverter")
+
+if (${enable_binary})
+  add_subdirectory("./auconverter")
+endif()
