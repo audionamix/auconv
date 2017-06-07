@@ -8,39 +8,6 @@ add_dependencies(auconv
   external_wave
 )
 
-set(ffmpeg_libraries
-  avcodec
-  avfilter
-  avformat
-  avutil
-  swresample
-)
-
-set(external_lib_names
-  AudioToolbox
-  QuartzCore
-  AppKit
-  OpenGL
-  CoreFoundation
-  VideoToolbox
-  CoreMedia
-  CoreVideo
-  VideoDecodeAcceleration
-  Security
-  CoreServices
-  iconv
-  bz2
-  z
-)
-set(external_libs "")
-foreach(lib ${external_lib_names})
-  find_library(lib_${lib} ${lib})
-  set(external_libs
-    ${external_libs}
-    ${lib_${lib}}
-  )
-endforeach()
-
 target_include_directories(auconv
   PRIVATE
     ${ffmpeg_install_dir}/include

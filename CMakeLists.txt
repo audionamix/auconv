@@ -9,6 +9,7 @@ option(enable_tests "Build unit tests" ON)
 set(CMAKE_CXX_STANDARD 14)
 
 # ffmpeg
+# -- external project
 set(ffmpeg_install_dir ${CMAKE_BINARY_DIR}/ffmpeg-install)
 set(ffmpeg_souce_dir ${CMAKE_BINARY_DIR}/ffmpeg-sources)
 file(MAKE_DIRECTORY ${ffmpeg_souce_dir})
@@ -25,6 +26,39 @@ ExternalProject_Add(external_ffmpeg
   INSTALL_COMMAND cd ${ffmpeg_souce_dir} && make install
 )
 link_directories("${ffmpeg_install_dir}/lib")
+
+# -- ffmpeg libraries and external dependencies
+set(ffmpeg_libraries
+  avcodec
+  avfilter
+  avformat
+  avutil
+  swresample
+)
+set(external_lib_names
+  AudioToolbox
+  QuartzCore
+  AppKit
+  OpenGL
+  CoreFoundation
+  VideoToolbox
+  CoreMedia
+  CoreVideo
+  VideoDecodeAcceleration
+  Security
+  CoreServices
+  iconv
+  bz2
+  z
+)
+set(external_libs "")
+foreach(lib ${external_lib_names})
+  find_library(lib_${lib} ${lib})
+  set(external_libs
+    ${external_libs}
+    ${lib_${lib}}
+  )
+endforeach()
 
 # libwave
 set(wave_install_dir ${CMAKE_BINARY_DIR}/wave-install)
