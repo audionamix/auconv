@@ -21,12 +21,7 @@
 
 #include <string>
 #include <system_error>
-#include <vector>
 #include <memory>
-
-// TODO: impl class
-struct AVFormatContext;
-struct AVCodecContext;
 
 namespace auconv {
 

@@ -120,18 +120,12 @@ AVCodecContextPtr GetCodec(const AVFormatContextPtr format,
  * @return SwrContext
  */
 SwrContextPtr InitResampling(const AVCodecContextPtr codec,
-                             uint32_t sample_rate, bool mono,
-                             std::error_code& err) {
+                             uint32_t sample_rate, std::error_code& err) {
   // TODO: may be unsafe ! Understand why swr_free use SwrContext** ...
   auto swr =
       SwrContextPtr(swr_alloc(), [](SwrContext* ptr) { swr_free(&ptr); });
-
   auto channel_count = codec->channels;
   auto channel_layout = codec->channel_layout;
-  if (mono) {
-    channel_count = 1;
-    channel_layout = AV_CH_LAYOUT_MONO;
-  }
 
   av_opt_set_int(swr.get(), "in_channel_count", codec->channels, 0);
   av_opt_set_int(swr.get(), "out_channel_count", channel_count, 0);
@@ -261,7 +255,7 @@ void File::Export(const std::string& path, Format format,
   }
 
   // init conversion parameters
-  auto swr = internal::InitResampling(impl_->codec, sample_rate_, mono_, err);
+  auto swr = internal::InitResampling(impl_->codec, sample_rate_, err);
   if (err) {
     return;
   }
@@ -285,7 +279,7 @@ void File::Export(const std::string& path, Format format,
   auto frame_writer = [this, &wavefile, swr](AVFramePtr frame) {
     // convert frame to raw data
     float* buffer;
-    av_samples_alloc((uint8_t**)&buffer, NULL, channel_count(),
+    av_samples_alloc((uint8_t**)&buffer, NULL, channel_count_,
                      frame->nb_samples, AV_SAMPLE_FMT_FLT, 0);
     int frame_count =
         swr_convert(swr.get(), (uint8_t**)&buffer, frame->nb_samples,
@@ -293,9 +287,21 @@ void File::Export(const std::string& path, Format format,
 
     // Write raw data to file
     std::vector<float> data;
-    for (int frame_idx = 0; frame_idx < frame_count * channel_count();
-         frame_idx++) {
-      data.push_back(buffer[frame_idx]);
+    for (int frame_idx = 0; frame_idx < frame_count; frame_idx++) {
+      float mono_value = 0;
+      for (int channel_idx = 0; channel_idx < channel_count_; channel_idx++) {
+        auto value = buffer[frame_idx * channel_count_ + channel_idx];
+        if (mono_) {
+          // compute mono value
+          mono_value += (value / channel_count_);
+          // if the channel idx is last channel, push mono value to data
+          if (channel_idx == channel_count_ - 1) {
+            data.push_back(mono_value);
+          }
+        } else {
+          data.push_back(value);
+        }
+      }
     }
     auto waveerror = wavefile.Write(data);
     if (waveerror != wave::kNoError) {
