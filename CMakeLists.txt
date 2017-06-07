@@ -1,5 +1,12 @@
 cmake_minimum_required(VERSION 3.0)
 
+# hunter for complex external dependencies (boost)
+include("cmake/HunterGate.cmake")
+HunterGate(
+    URL "https://github.com/ruslo/hunter/archive/v0.19.6.tar.gz"
+    SHA1 "8c70cf364fe927dd72a8e38202fedbd1ac1b0d1a"
+)
+
 include(ExternalProject)
 project(AuConv)
 
@@ -71,6 +78,9 @@ ExternalProject_Add(external_wave
     "-DCMAKE_INSTALL_PREFIX=${wave_install_dir}"
 )
 link_directories("${wave_install_dir}/lib")
+
+# boost
+hunter_add_package(Boost COMPONENTS program_options)
 
 if (${enable_tests})
   enable_testing()
