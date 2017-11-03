@@ -226,11 +226,15 @@ void File::Open(const std::string& path, std::error_code& err) {
   // initialize sample rate and channel count from codec
   sample_rate_ = impl_->codec->sample_rate;
   channel_count_ = impl_->codec->channels;
+  // default bits per sample is 16
+  bits_per_samples_ = 16;
   mono_ = false;
 }
 
 uint32_t File::sample_rate() const { return sample_rate_; }
 void File::set_sample_rate(uint32_t value) { sample_rate_ = value; }
+uint8_t File::bits_per_samples() const { return bits_per_samples_; }
+void File::set_bits_per_samples(uint8_t value) { bits_per_samples_ = value; }
 
 uint8_t File::channel_count() const {
   if (mono_) {
@@ -272,7 +276,7 @@ void File::Export(const std::string& path, Format format,
   // set parameters
   wavefile.set_channel_number(channel_count());
   wavefile.set_sample_rate(sample_rate());
-  wavefile.set_bits_per_sample(32);
+  wavefile.set_bits_per_sample(bits_per_samples_);
 
   // TODO: should be moved to internal namespace
   // Function to be ran on each frame

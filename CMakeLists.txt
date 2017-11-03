@@ -15,7 +15,7 @@ option(enable_binary "Build auconverter binary" ON)
 
 # enable c++11/14
 set(CMAKE_CXX_STANDARD 14)
-
+set(CMAKE_OSX_DEPLOYMENT_TARGET "10.11")
 # ffmpeg
 # -- external project
 set(ffmpeg_install_dir ${CMAKE_BINARY_DIR}/ffmpeg-install)
@@ -72,7 +72,7 @@ endforeach()
 set(wave_install_dir ${CMAKE_BINARY_DIR}/wave-install)
 ExternalProject_Add(external_wave
   GIT_REPOSITORY "https://github.com/audionamix/wave"
-  GIT_TAG "v0.5a"
+  GIT_TAG "v0.6a"
   # don't update so that we don't rebuild every time
   UPDATE_COMMAND ""
   CMAKE_ARGS

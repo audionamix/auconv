@@ -12,11 +12,13 @@ TEST(File, Convert) {
   ASSERT_FALSE(err);
   ASSERT_EQ(file.sample_rate(), 48000);
   ASSERT_EQ(file.channel_count(), 2);
+  ASSERT_EQ(file.bits_per_samples(), 16);
   
   file.Export("/tmp/file.wav", auconv::Format::kWav, err);
   ASSERT_FALSE(err);
   
   file.set_sample_rate(44100);
+  file.set_bits_per_samples(24);
   file.set_mono(true);
   
   file.Export("/tmp/file_mono.wav", auconv::Format::kWav, err);

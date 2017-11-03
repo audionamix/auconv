@@ -35,6 +35,9 @@ class File {
 
   uint32_t sample_rate() const;
   void set_sample_rate(uint32_t value);
+  
+  uint8_t bits_per_samples() const;
+  void set_bits_per_samples(uint8_t value);
 
   uint8_t channel_count() const;
   void set_mono(bool value);
@@ -44,6 +47,7 @@ class File {
  private:
   uint32_t sample_rate_;
   uint8_t channel_count_;
+  uint8_t bits_per_samples_;
   bool mono_;
 
   class Impl;
