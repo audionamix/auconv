@@ -288,6 +288,11 @@ void File::Export(const std::string& path, Format format,
     int frame_count =
         swr_convert(swr.get(), (uint8_t**)&buffer, frame->nb_samples,
                     (const uint8_t**)frame->data, frame->nb_samples);
+    // auto deallocator for buffer
+    auto buffer_deleter = [](float* ptr){
+      av_freep((uint8_t**)&ptr);
+    };
+    std::unique_ptr<float, decltype(buffer_deleter)> unique_buffer(buffer, buffer_deleter);
 
     // Write raw data to file
     std::vector<float> data;
