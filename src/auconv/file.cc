@@ -174,18 +174,49 @@ void HandleEachFrame(const AVFormatContextPtr format,
 
   // iterate through frames
   while (av_read_frame(format.get(), &packet) >= 0) {
+    
     auto error = avcodec_send_packet(codec.get(), &packet);
-    if (error < 0) {
+    if (error == AVERROR_EOF) {
+      // the decoder has been flushed, and no new packets can be sent to it
+      // (also returned if more than 1 flush packet is sent)
+      break;
+    } else if (error == AVERROR(EINVAL)) {
+      // codec not opened, it is an encoder, or requires flush
       err = std::make_error_code(std::errc::io_error);
       return;
-    }
-    error = avcodec_receive_frame(codec.get(), frame.get());
-    if (error < 0) {
+    } else if (error == AVERROR(ENOMEM)) {
+      // failed to add packet to internal queue, or similar other errors:
+      // legitimate decoding errors
       err = std::make_error_code(std::errc::io_error);
       return;
+    } else if (error >= 0 || error == AVERROR(EAGAIN)) {
+      // no error or
+      // input is not accepted right now - the packet must be resent after
+      // trying to read output
+      error = avcodec_receive_frame(codec.get(), frame.get());
+      if (error == AVERROR(EAGAIN)) {
+        // output is not available right now - user must try to send input
+        continue;
+      } else if (error == AVERROR_EOF) {
+        // the encoder has been fully flushed, and there will be no more output
+        // packets
+        break;
+      } else if (error == AVERROR(EINVAL)) {
+        // codec not opened, or it is an encoder other errors: legitimate
+        // decoding errors
+        err = std::make_error_code(std::errc::io_error);
+        return;
+      } else if (error < 0) {
+        continue;
+      } else {
+        handle_frame(frame);
+      }
+    } else if (error < 0) {
+      // any other error, we won't try to receive a frame but we try to write
+      // other frames
+      continue;
     }
-
-    handle_frame(frame);
+    
   }
   // reposition to beginning of file
   av_seek_frame(format.get(), -1, 0, AVSEEK_FLAG_ANY);
@@ -289,10 +320,9 @@ void File::Export(const std::string& path, Format format,
         swr_convert(swr.get(), (uint8_t**)&buffer, frame->nb_samples,
                     (const uint8_t**)frame->data, frame->nb_samples);
     // auto deallocator for buffer
-    auto buffer_deleter = [](float* ptr){
-      av_freep((uint8_t**)&ptr);
-    };
-    std::unique_ptr<float, decltype(buffer_deleter)> unique_buffer(buffer, buffer_deleter);
+    auto buffer_deleter = [](float* ptr) { av_freep((uint8_t**)&ptr); };
+    std::unique_ptr<float, decltype(buffer_deleter)> unique_buffer(
+        buffer, buffer_deleter);
 
     // Write raw data to file
     std::vector<float> data;
@@ -323,3 +353,4 @@ void File::Export(const std::string& path, Format format,
   internal::HandleEachFrame(impl_->format, impl_->codec, frame_writer, err);
 }
 }  // namespace auconv
+
