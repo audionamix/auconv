@@ -23,12 +23,11 @@ set(ffmpeg_souce_dir ${CMAKE_BINARY_DIR}/ffmpeg-sources)
 file(MAKE_DIRECTORY ${ffmpeg_souce_dir})
 ExternalProject_Add(external_ffmpeg
   GIT_REPOSITORY "git@github.com:FFmpeg/FFmpeg.git"
-  GIT_TAG "n3.3.1"
+  GIT_TAG "n3.3.5"
   # don't update so that we don't rebuild every time
   UPDATE_COMMAND ""
   SOURCE_DIR ${ffmpeg_souce_dir}
-  CONFIGURE_COMMAND
-    cd ${ffmpeg_souce_dir} && ./configure --enable-gpl --disable-yasm --disable-avdevice --disable-swscale --disable-postproc --prefix=${ffmpeg_install_dir}
+  CONFIGURE_COMMAND cd ${ffmpeg_souce_dir} && ./configure --extra-ldflags="-mmacosx-version-min=10.11" --extra-cflags="-mmacosx-version-min=10.11" --enable-gpl --disable-yasm --disable-avdevice --disable-swscale --disable-postproc  --prefix=${ffmpeg_install_dir}
   BUILD_COMMAND cd ${ffmpeg_souce_dir} && make
   INSTALL_DIR ${ffmpeg_install_dir}
   INSTALL_COMMAND cd ${ffmpeg_souce_dir} && make install
@@ -103,11 +102,16 @@ if (${enable_tests})
   file(MAKE_DIRECTORY "${test_resource_path}")
 
   # mp3
-  message(STATUS "downloading test file https://ccrma.stanford.edu/~jos/mp3/gtr-jazz.mp3")
+  message(STATUS "downloading test file")
   file(DOWNLOAD
     "https://ccrma.stanford.edu/~jos/mp3/gtr-jazz.mp3"
     "${test_resource_path}/gtr-jazz.mp3"
   )
+
+  # other error files
+  execute_process(COMMAND aws s3 cp s3://audionamix-public/auconv-testfiles/EverythingWasEverything.m4a "${test_resource_path}/EverythingWasEverything.m4a")
+  execute_process(COMMAND aws s3 cp s3://audionamix-public/auconv-testfiles/MajorLazer-LeanOn.mp3 "${test_resource_path}/MajorLazer-LeanOn.mp3")
+  execute_process(COMMAND aws s3 cp s3://audionamix-public/auconv-testfiles/The_Chainsmokers-Something_Just_Like_Thi-LLS.aif "${test_resource_path}/The_Chainsmokers-Something_Just_Like_Thi-LLS.aif")
 endif()
 
 set(src "${CMAKE_SOURCE_DIR}/src")
