@@ -38,7 +38,7 @@ using AVFormatContextPtr = std::shared_ptr<AVFormatContext>;
 using AVCodecContextPtr = std::shared_ptr<AVCodecContext>;
 using SwrContextPtr = std::shared_ptr<SwrContext>;
 using AVFramePtr = std::shared_ptr<AVFrame>;
-using FrameHandler = std::function<void(AVFramePtr, bool)>;
+using FrameHandler = std::function<void(AVFramePtr)>;
 
 // ------------------
 // Utility functions (TODO: move in some other file)
@@ -173,7 +173,6 @@ void HandleEachFrame(const AVFormatContextPtr format,
   AVFramePtr frame(frame_ptr, [](AVFrame* ptr) { av_frame_free(&ptr); });
 
   // iterate through frames
-  bool reset_audiofile = false;
   while (av_read_frame(format.get(), &packet) >= 0) {
     
     auto error = avcodec_send_packet(codec.get(), &packet);
@@ -209,11 +208,9 @@ void HandleEachFrame(const AVFormatContextPtr format,
         return;
       } else if (error < 0) {
         // anther error shows a decoding problem. earlier in the process. we should reset the audio file
-        reset_audiofile = true;
         continue;
       } else {
-        handle_frame(frame, reset_audiofile);
-        reset_audiofile = false;
+        handle_frame(frame);
       }
     } else if (error < 0) {
       // any other error, we won't try to receive a frame but we try to write
@@ -315,7 +312,11 @@ void File::Export(const std::string& path, Format format,
 
   // TODO: should be moved to internal namespace
   // Function to be ran on each frame
-  auto frame_writer = [this, &wavefile, swr](AVFramePtr frame, bool reset_audio_file) {
+  auto frame_writer = [this, &wavefile, swr](AVFramePtr frame) {
+    if (frame->pkt_duration == 0) {
+      return;
+    }
+    
     // convert frame to raw data
     float* buffer;
     av_samples_alloc((uint8_t**)&buffer, NULL, channel_count_,
@@ -345,9 +346,6 @@ void File::Export(const std::string& path, Format format,
           data.push_back(value);
         }
       }
-    }
-    if (reset_audio_file) {
-      wavefile.Seek(0);
     }
     auto waveerror = wavefile.Write(data);
     if (waveerror != wave::kNoError) {

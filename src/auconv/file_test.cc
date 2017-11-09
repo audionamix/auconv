@@ -69,3 +69,18 @@ TEST(File, ConvertErrorAIFF) {
   ASSERT_FALSE(err);
 }
 
+TEST(File, ConvertErrorWhiteNoise) {
+  std::string path = gResourcePath + "/White-Noise-At-Beginning-After-Conversion.aif";
+  std::error_code err;
+  
+  auconv::File file;
+  file.Open(path, err);
+  ASSERT_FALSE(err);
+  ASSERT_EQ(file.sample_rate(), 44100);
+  ASSERT_EQ(file.channel_count(), 2);
+  //  ASSERT_EQ(file.bits_per_samples(), 16);
+  
+  file.Export("/tmp/file-noise.wav", auconv::Format::kWav, err);
+  ASSERT_FALSE(err);
+}
+
