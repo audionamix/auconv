@@ -149,6 +149,19 @@ SwrContextPtr InitResampling(const AVCodecContextPtr codec,
 }
 
 /**
+ * @brief Clip the value. If value is over 1, set it to 1. If bellow -1, set it
+ * to -1
+ */
+void Clip(float* value) {
+  if (*value > 1) {
+    *value = 1;
+  }
+  if (*value < -1) {
+    *value = -1;
+  }
+}
+
+/**
  * @brief run an handler on each read frame from format object
  * @param format obtained from input file (GetFormat function)
  * @param codec obtained from input file (GetCodec function)
@@ -174,7 +187,6 @@ void HandleEachFrame(const AVFormatContextPtr format,
 
   // iterate through frames
   while (av_read_frame(format.get(), &packet) >= 0) {
-    
     auto error = avcodec_send_packet(codec.get(), &packet);
     if (error == AVERROR_EOF) {
       // the decoder has been flushed, and no new packets can be sent to it
@@ -207,7 +219,8 @@ void HandleEachFrame(const AVFormatContextPtr format,
         err = std::make_error_code(std::errc::io_error);
         return;
       } else if (error < 0) {
-        // anther error shows a decoding problem. earlier in the process. we should reset the audio file
+        // anther error shows a decoding problem. earlier in the process. we
+        // should reset the audio file
         continue;
       } else {
         handle_frame(frame);
@@ -217,7 +230,6 @@ void HandleEachFrame(const AVFormatContextPtr format,
       // other frames
       continue;
     }
-    
   }
   // reposition to beginning of file
   av_seek_frame(format.get(), -1, 0, AVSEEK_FLAG_ANY);
@@ -316,7 +328,7 @@ void File::Export(const std::string& path, Format format,
     if (frame->pkt_duration == 0) {
       return;
     }
-    
+
     // convert frame to raw data
     float* buffer;
     av_samples_alloc((uint8_t**)&buffer, NULL, channel_count_,
@@ -340,9 +352,11 @@ void File::Export(const std::string& path, Format format,
           mono_value += (value / channel_count_);
           // if the channel idx is last channel, push mono value to data
           if (channel_idx == channel_count_ - 1) {
+            internal::Clip(&mono_value);
             data.push_back(mono_value);
           }
         } else {
+          internal::Clip(&value);
           data.push_back(value);
         }
       }
@@ -358,4 +372,3 @@ void File::Export(const std::string& path, Format format,
   internal::HandleEachFrame(impl_->format, impl_->codec, frame_writer, err);
 }
 }  // namespace auconv
-

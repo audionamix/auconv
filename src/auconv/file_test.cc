@@ -84,3 +84,18 @@ TEST(File, ConvertErrorWhiteNoise) {
   ASSERT_FALSE(err);
 }
 
+TEST(File, Clicking) {
+  std::string path = gResourcePath + "/clicking.m4a";
+  std::error_code err;
+  
+  auconv::File file;
+  file.Open(path, err);
+  ASSERT_FALSE(err);
+  ASSERT_EQ(file.sample_rate(), 44100);
+  ASSERT_EQ(file.channel_count(), 2);
+  //  ASSERT_EQ(file.bits_per_samples(), 16);
+  
+  file.Export("/tmp/file-clicking.wav", auconv::Format::kWav, err);
+  ASSERT_FALSE(err);
+}
+

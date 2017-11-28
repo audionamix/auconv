@@ -22,7 +22,7 @@ set(ffmpeg_install_dir ${CMAKE_BINARY_DIR}/ffmpeg-install)
 set(ffmpeg_souce_dir ${CMAKE_BINARY_DIR}/ffmpeg-sources)
 file(MAKE_DIRECTORY ${ffmpeg_souce_dir})
 ExternalProject_Add(external_ffmpeg
-  GIT_REPOSITORY "git@github.com:FFmpeg/FFmpeg.git"
+  GIT_REPOSITORY "https://github.com/FFmpeg/FFmpeg.git"
   GIT_TAG "n3.3.5"
   # don't update so that we don't rebuild every time
   UPDATE_COMMAND ""
@@ -103,16 +103,17 @@ if (${enable_tests})
 
   # mp3
   message(STATUS "downloading test file")
-  file(DOWNLOAD
-    "https://ccrma.stanford.edu/~jos/mp3/gtr-jazz.mp3"
-    "${test_resource_path}/gtr-jazz.mp3"
-  )
-
-  # other error files
-  execute_process(COMMAND aws s3 cp s3://audionamix-public/auconv-testfiles/EverythingWasEverything.m4a "${test_resource_path}/EverythingWasEverything.m4a")
-  execute_process(COMMAND aws s3 cp s3://audionamix-public/auconv-testfiles/MajorLazer-LeanOn.mp3 "${test_resource_path}/MajorLazer-LeanOn.mp3")
-  execute_process(COMMAND aws s3 cp s3://audionamix-public/auconv-testfiles/The_Chainsmokers-Something_Just_Like_Thi-LLS.aif "${test_resource_path}/The_Chainsmokers-Something_Just_Like_Thi-LLS.aif")
-  execute_process(COMMAND aws s3 cp s3://audionamix-public/auconv-testfiles/White-Noise-At-Beginning-After-Conversion.aif "${test_resource_path}/White-Noise-At-Beginning-After-Conversion.aif")
+  # file(DOWNLOAD
+  #   "https://ccrma.stanford.edu/~jos/mp3/gtr-jazz.mp3"
+  #   "${test_resource_path}/gtr-jazz.mp3"
+  # )
+  #
+  # # other error files
+  # execute_process(COMMAND aws s3 cp s3://audionamix-public/auconv-testfiles/EverythingWasEverything.m4a "${test_resource_path}/EverythingWasEverything.m4a")
+  # execute_process(COMMAND aws s3 cp s3://audionamix-public/auconv-testfiles/MajorLazer-LeanOn.mp3 "${test_resource_path}/MajorLazer-LeanOn.mp3")
+  # execute_process(COMMAND aws s3 cp s3://audionamix-public/auconv-testfiles/The_Chainsmokers-Something_Just_Like_Thi-LLS.aif "${test_resource_path}/The_Chainsmokers-Something_Just_Like_Thi-LLS.aif")
+  # execute_process(COMMAND aws s3 cp s3://audionamix-public/auconv-testfiles/White-Noise-At-Beginning-After-Conversion.aif "${test_resource_path}/White-Noise-At-Beginning-After-Conversion.aif")
+  # execute_process(COMMAND aws s3 cp s3://audionamix-public/auconv-testfiles/clicking.m4a "${test_resource_path}/clicking.m4a")
 
 endif()
 
