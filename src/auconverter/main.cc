@@ -1,61 +1,51 @@
 #include <iostream>
 #include <system_error>
 
-#include <boost/program_options.hpp>
+#include <cxxopts.hpp>
 
 #include "auconv/file.h"
 
-namespace po = boost::program_options;
-
 int main(int argc, char* argv[]) {
   // declare program options
-  po::options_description desc("Allowed options");
-  desc.add_options()("help", "produce help message")(
-      "input", po::value<std::string>(), "Path to input file")(
-      "output,o", po::value<std::string>()->default_value("out.wav"),
-      "Path to result")("mono", po::bool_switch()->default_value(false),
-                        "Convert to mono")("sample-rate", po::value<int>(),
-                                           "Output sampling rate");
+  cxxopts::Options options("AuConverter",
+                           "Compressed audio to wav PCM converter");
+  options
+      .add_options()
+        ("h,help", "produce help message")
+        ("i,input", "input file path", cxxopts::value<std::string>())
+        ("o,output", "output file path", cxxopts::value<std::string>()->default_value("out.wav"));
+  options.parse_positional("input");
+  auto result = options.parse(argc, argv);
 
-  po::positional_options_description p;
-  p.add("input", -1);
-
-  po::variables_map vm;
-  po::store(
-      po::command_line_parser(argc, argv).options(desc).positional(p).run(),
-      vm);
-  po::notify(vm);
-
-  if (vm.count("help") != 0 || vm.count("input") == 0) {
-    std::cout << desc << std::endl;
+  // display help if requested
+  if (result.count("help")) {
+    std::cout << options.help() << std::endl;
     return 1;
   }
 
-  // parse input args
-  auto input_file = vm["input"].as<std::string>();
-  auto output_file = vm["output"].as<std::string>();
-  auto mono = vm["mono"].as<bool>();
+  // get sources and output paths
+  std::string output_path, source_path;
+  if (result.count("input")) {
+    source_path = result["input"].as<std::string>();
+  }
+  if (result.count("output")) {
+    output_path = result["output"].as<std::string>();
+  }
 
   // open file
   auconv::File file;
   std::error_code err;
-  file.Open(input_file, err);
+  file.Open(source_path, err);
   if (err) {
-    std::cerr << "Error when opening " << input_file << " : " << err.message()
+    std::cerr << "Error when opening " << source_path << " : " << err.message()
               << std::endl;
     return -1;
   }
-  
-  // set new paramerters
-  file.set_mono(mono);
-  if (vm.count("sample-rate") != 0) {
-    file.set_sample_rate(vm["sample-rate"].as<int>());
-  }
 
   // export file
-  file.Export(output_file, auconv::Format::kWav, err);
+  file.Export(output_path, auconv::Format::kWav, err);
   if (err) {
-    std::cerr << "Error when exporting to " << output_file << " : "
+    std::cerr << "Error when exporting to " << output_path << " : "
               << err.message() << std::endl;
     return -1;
   }
