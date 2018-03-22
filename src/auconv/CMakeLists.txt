@@ -1,4 +1,4 @@
-add_library(auconv
+add_library(auconv SHARED
   file.cc
   file.h
 )
@@ -10,9 +10,37 @@ add_dependencies(auconv
 
 target_include_directories(auconv
   PRIVATE
-    ${ffmpeg_install_dir}/include
+    ${ffmpeg_include_dir}
     ${wave_install_dir}/include
 )
+
+target_link_libraries(auconv
+  wave
+  ${ffmpeg_libraries}
+  ${ffmpeg_external_libs}
+)
+
+if (APPLE)
+  set_target_properties(auconv PROPERTIES
+    FRAMEWORK TRUE
+    FRAMEWORK_VERSION A
+    MACOSX_FRAMEWORK_IDENTIFIER com.audionamix.auconv
+    PUBLIC_HEADER ${src}/auconv/file.h
+  )
+
+  # after build, we need to install dependencies into the framework
+  add_custom_command(
+    TARGET auconv
+    POST_BUILD
+    COMMAND bash ${src}/ffmpeg/install.sh $<TARGET_FILE:auconv> @rpath/auconv.framework/Versions/A/Resources
+  )
+
+  # install target is just about installing the framework
+  install(DIRECTORY
+    ${CMAKE_BINARY_DIR}/src/auconv/$<CONFIG>/auconv.framework
+    DESTINATION Frameworks
+  )
+endif ()
 
 # unit tests
 if (${enable_tests})
@@ -21,19 +49,16 @@ if (${enable_tests})
   )
 
   add_dependencies(auconv_test
-    auconv
     external_googletest
   )
 
   target_link_libraries(auconv_test
+    optimized gtest
+    optimized gtest_main
+    debug gtestd
+    debug gtest_maind
     auconv
-    gtest
-    gtest_main
     wave
-    ${ffmpeg_libraries}
-
-    # needed by ffmpeg
-    ${external_libs}
   )
 
   target_include_directories(auconv_test
@@ -45,27 +70,3 @@ if (${enable_tests})
     PUBLIC -DTEST_RESOURCES_PATH="${test_resource_path}"
   )
 endif()
-
-# install rules
-install(TARGETS auconv
-  RUNTIME DESTINATION bin
-  LIBRARY DESTINATION lib
-  ARCHIVE DESTINATION lib
-)
-# includes
-install(FILES
-  ${src}/auconv/file.h
-  DESTINATION include/auconv
-)
-# external dependencies
-set(dependencies "")
-foreach (ffmpeg_lib ${ffmpeg_libraries})
-  set(dependencies
-    ${dependencies}
-    ${ffmpeg_install_dir}/lib/lib${ffmpeg_lib}.a
-  )
-endforeach()
-install(FILES
-  ${dependencies}
-  DESTINATION lib
-)
