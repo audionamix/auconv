@@ -29,12 +29,12 @@ int main(int argc, char* argv[]) {
 ## License
 
 This project uses libraries from the [FFmpeg project](https://ffmpeg.org/)
-licensed under the [GPLv2.0](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html).
-
-[FFmpeg](https://ffmpeg.org/) libraries are compiled using the `--enable-gpl`
-(see CMakeLists.txt) so sources that use this project does not need to be
-public. However, credits must be given to their team. For more information, see
-[this](https://ffmpeg.org/legal.html).
+licensed under the
+[LGPLv2.1](https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html).  
+On OSX, The install target creates `auconv.framework` which contains the shared
+version of [FFmpeg](https://ffmpeg.org/) libraries and a zipped file containing
+the sources, as requested by the legal information found
+[here](https://ffmpeg.org/legal.html).
 
 
 ## Example
