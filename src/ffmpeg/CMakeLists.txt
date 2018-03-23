@@ -92,8 +92,11 @@ if (APPLE)
 
 elseif (WIN32)
   # TODO switch according to arch type here...
-  set(ffmpeg_arch_prefix "win32")
-
+  if("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
+    set(ffmpeg_arch_prefix "win64")
+  else()
+    set(ffmpeg_arch_prefix "win32")
+  endif()
   set(ffmpeg_shared_folder_name "ffmpeg-3.4.2-${ffmpeg_arch_prefix}-shared")
   set(ffmpeg_sources_folder_name "ffmpeg-3.4.2-${ffmpeg_arch_prefix}-dev")
   set(ffmpeg_shared_url "https://ffmpeg.zeranoe.com/builds/${ffmpeg_arch_prefix}/shared/${ffmpeg_shared_folder_name}.zip")
