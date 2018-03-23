@@ -40,6 +40,12 @@ if (APPLE)
     ${CMAKE_BINARY_DIR}/src/auconv/$<CONFIG>/auconv.framework
     DESTINATION Frameworks
   )
+else ()
+  install(TARGETS auconv
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+  )
 endif ()
 
 # unit tests
@@ -60,6 +66,13 @@ if (${enable_tests})
     auconv
     wave
   )
+
+  if (WIN32)
+    # On windows we need the dlls to be copied next to the executable
+    foreach(dll ${ffmpeg_shared_libraries})
+      add_custom_command(TARGET auconv_test POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy "${dll}" "$<TARGET_FILE_DIR:auconv_test>")
+    endforeach()
+  endif()
 
   target_include_directories(auconv_test
     PRIVATE

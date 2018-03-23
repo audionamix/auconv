@@ -28,6 +28,14 @@ target_include_directories(auconverter
     ${cxxopts_install_dir}/include
 )
 
+if (WIN32)
+  # On windows we need the dlls to be copied next to the executable
+  foreach(dll ${ffmpeg_shared_libraries})
+    add_custom_command(TARGET auconverter POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy "${dll}" "$<TARGET_FILE_DIR:auconverter>")
+  endforeach()
+  add_custom_command(TARGET auconverter POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:auconv>" "$<TARGET_FILE_DIR:auconverter>")
+endif()
+
 install(TARGETS auconverter
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib

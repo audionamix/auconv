@@ -18,6 +18,7 @@
 
 #include <iostream>
 #include <vector>
+#include <functional>
 
 // ffmpeg
 #ifdef __cplusplus
