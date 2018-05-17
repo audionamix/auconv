@@ -9,7 +9,7 @@ if (APPLE)
 
   # Build target
   ExternalProject_Add(external_ffmpeg
-    URL ${ffmpeg_souce_dir}
+    URL ${ffmpeg_clone_dir}
     # don't update so that we don't rebuild every time
     UPDATE_COMMAND ""
     SOURCE_DIR ${ffmpeg_souce_dir}
