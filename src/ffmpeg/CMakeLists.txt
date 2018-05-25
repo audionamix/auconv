@@ -1,15 +1,24 @@
 # Build ffmpeg and install informations requested here: https://www.ffmpeg.org/legal.html
 if (APPLE)
-  set(ffmpeg_install_dir ${CMAKE_BINARY_DIR}/ffmpeg-install)
   set(ffmpeg_clone_dir ${CMAKE_BINARY_DIR}/ffmpeg-clone)
   set(ffmpeg_souce_dir ${CMAKE_BINARY_DIR}/ffmpeg-sources)
+  set(ffmpeg_install_dir ${CMAKE_BINARY_DIR}/ffmpeg-install)
   set(ffmpeg_version "n3.3.5")
   set(ffmpeg_configuration_file ${CMAKE_BINARY_DIR}/configuration.txt)
   set(ffmpeg_compressed_sources ${CMAKE_BINARY_DIR}/ffmpeg-sources.tar.gz)
 
+  # clone ffmpeg from github into the source dir
+  # We don't use the git in the external project so we can do the git diff and
+  # tar the sources so we can redistribute them
+  if (NOT EXISTS ${ffmpeg_clone_dir})
+    file(MAKE_DIRECTORY ${ffmpeg_souce_dir})
+    execute_process(COMMAND git clone -n "https://github.com/FFmpeg/FFmpeg.git" ${ffmpeg_clone_dir})
+    execute_process(COMMAND git checkout ${ffmpeg_version} WORKING_DIRECTORY ${ffmpeg_clone_dir})
+    execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory ${ffmpeg_clone_dir} ${ffmpeg_souce_dir})
+  endif()
+
   # Build target
   ExternalProject_Add(external_ffmpeg
-    URL ${ffmpeg_clone_dir}
     # don't update so that we don't rebuild every time
     UPDATE_COMMAND ""
     SOURCE_DIR ${ffmpeg_souce_dir}
@@ -17,20 +26,6 @@ if (APPLE)
     BUILD_COMMAND cd ${ffmpeg_souce_dir} && make
     INSTALL_DIR ${ffmpeg_install_dir}
     INSTALL_COMMAND cd ${ffmpeg_souce_dir} && make install
-  )
-
-  # We don't use the git in the external project so we can do the git diff and
-  # tar the sources so we can redistribute them
-  add_custom_command(
-    TARGET external_ffmpeg
-    PRE_BUILD
-    COMMAND
-      # if the clone hasn't been copied yet, do it !
-      if [ ! -d "${ffmpeg_clone_dir}" ]; then
-        git clone -n "https://github.com/FFmpeg/FFmpeg.git" ${ffmpeg_clone_dir} &&
-        cd ${ffmpeg_clone_dir} && git checkout ${ffmpeg_version} &&
-        cp -r ${ffmpeg_clone_dir}/* ${ffmpeg_souce_dir} \\;
-      fi
   )
   file(WRITE
     ${ffmpeg_configuration_file}
