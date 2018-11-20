@@ -21,6 +21,19 @@ target_link_libraries(auconv
 )
 
 if (APPLE)
+  # remove non desired rpaths
+  add_custom_command(TARGET auconv
+    POST_BUILD COMMAND
+    ${CMAKE_INSTALL_NAME_TOOL} -delete_rpath "${wave_install_dir}/lib" -delete_rpath "${gtest_install_dir}/lib" -delete_rpath "${ffmpeg_lib_dir}" || true
+    $<TARGET_FILE:auconv>
+  )
+  # and add the right one
+  add_custom_command(TARGET auconv
+    POST_BUILD COMMAND
+    ${CMAKE_INSTALL_NAME_TOOL} -add_rpath "@loader_path/../Frameworks/auconv.framework/Resources" || true
+    $<TARGET_FILE:auconv>
+  )
+
   set_target_properties(auconv PROPERTIES
     FRAMEWORK TRUE
     FRAMEWORK_VERSION A
